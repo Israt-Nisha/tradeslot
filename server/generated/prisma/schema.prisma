@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  TRADER
+  CUSTOMER
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum Channel {
+  WEB_CHAT
+  WHATSAPP
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  traderProfile   TraderProfile?
+  customerProfile CustomerProfile?
+
+  @@map("users")
+}
+
+model TraderProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  phone           String
+  stripeAccountId String?
+  stripeOnboarded Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  workAreas WorkArea[]
+  bookings  Booking[]
+  messages  Message[]
+
+  @@map("trader_profiles")
+}
+
+model CustomerProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bookings Booking[]
+  messages Message[]
+
+  @@map("customer_profiles")
+}
+
+model WorkArea {
+  id        String   @id @default(uuid())
+  traderId  String
+  areaName  String
+  date      DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trader TraderProfile @relation(fields: [traderId], references: [id], onDelete: Cascade)
+
+  bookings Booking[]
+
+  @@index([traderId, date])
+  @@map("work_areas")
+}
+
+model Booking {
+  id         String  @id @default(uuid())
+  traderId   String
+  customerId String
+  workAreaId String?
+
+  scheduledStart DateTime
+  scheduledEnd   DateTime
+
+  status BookingStatus @default(PENDING)
+
+  jobAddress String?
+  notes      String?
+
+  bookingFee          Float
+  travelBufferMinutes Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trader   TraderProfile   @relation(fields: [traderId], references: [id], onDelete: Restrict)
+  customer CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  workArea WorkArea?       @relation(fields: [workAreaId], references: [id], onDelete: SetNull)
+
+  messages Message[]
+  payment  Payment?
+
+  @@index([traderId, scheduledStart])
+  @@index([customerId])
+  @@map("bookings")
+}
+
+model Message {
+  id         String  @id @default(uuid())
+  bookingId  String?
+  traderId   String?
+  customerId String?
+
+  channel   Channel
+  direction MessageDirection
+
+  senderId String
+  content  String
+  sentAt   DateTime
+
+  externalId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking  Booking?         @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  trader   TraderProfile?   @relation(fields: [traderId], references: [id], onDelete: Cascade)
+  customer CustomerProfile? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, channel])
+  @@index([bookingId])
+  @@index([traderId])
+  @@index([customerId])
+  @@map("messages")
+}
+
+model Payment {
+  id        String @id @default(uuid())
+  bookingId String @unique
+
+  amount      Float
+  platformFee Float
+  currency    String @default("usd")
+
+  stripePaymentIntentId String? @unique
+  stripeTransferId      String?
+
+  status PaymentStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
