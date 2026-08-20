@@ -7,12 +7,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  TRADER
-  CUSTOMER
-  ADMIN
-}
-
 enum BookingStatus {
   PENDING
   CONFIRMED
@@ -20,7 +14,7 @@ enum BookingStatus {
   CANCELLED
 }
 
-enum Channel {
+enum ChannelType {
   WEB_CHAT
   WHATSAPP
 }
@@ -30,6 +24,12 @@ enum MessageDirection {
   OUTBOUND
 }
 
+enum SenderType {
+  TRADER
+  CUSTOMER
+  SYSTEM
+}
+
 enum PaymentStatus {
   PENDING
   SUCCEEDED
@@ -37,65 +37,66 @@ enum PaymentStatus {
   REFUNDED
 }
 
-model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  traderProfile   TraderProfile?
-  customerProfile CustomerProfile?
-
-  @@map("users")
-}
-
-model TraderProfile {
+model Trader {
   id              String   @id @default(uuid())
-  userId          String   @unique
-  phone           String
+  name            String
+  email           String   @unique
+  passwordHash    String
+  phone           String?
   stripeAccountId String?
   stripeOnboarded Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   workAreas WorkArea[]
   bookings  Booking[]
   messages  Message[]
 
-  @@map("trader_profiles")
+  @@map("traders")
 }
 
-model CustomerProfile {
-  id        String   @id @default(uuid())
-  userId    String   @unique
-  phone     String?
+model Customer {
+  id          String  @id @default(uuid())
+  name        String?
+  contactInfo String // Phone number (for WhatsApp) or session/cookie ID (for Web Chat)
+  channelId   String
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  channel  Channel   @relation(fields: [channelId], references: [id], onDelete: Restrict)
   bookings Booking[]
   messages Message[]
 
-  @@map("customer_profiles")
+  @@unique([contactInfo, channelId])
+  @@map("customers")
+}
+
+model Channel {
+  id        String      @id @default(uuid())
+  name      String
+  type      ChannelType
+  config    Json?
+  isActive  Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  messages  Message[]
+  bookings  Booking[]
+  customers Customer[]
+
+  @@map("channels")
 }
 
 model WorkArea {
-  id        String   @id @default(uuid())
-  traderId  String
-  areaName  String
-  date      DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(uuid())
+  traderId    String
+  areaDetails String
+  date        DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  trader TraderProfile @relation(fields: [traderId], references: [id], onDelete: Cascade)
-
+  trader   Trader    @relation(fields: [traderId], references: [id], onDelete: Cascade)
   bookings Booking[]
 
   @@index([traderId, date])
@@ -106,13 +107,14 @@ model Booking {
   id         String  @id @default(uuid())
   traderId   String
   customerId String
+  channelId  String
   workAreaId String?
 
-  scheduledStart DateTime
-  scheduledEnd   DateTime
+  requestedSlot  DateTime
+  confirmedStart DateTime
+  confirmedEnd   DateTime
 
-  status BookingStatus @default(PENDING)
-
+  status     BookingStatus @default(PENDING)
   jobAddress String?
   notes      String?
 
@@ -122,59 +124,55 @@ model Booking {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  trader   TraderProfile   @relation(fields: [traderId], references: [id], onDelete: Restrict)
-  customer CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  workArea WorkArea?       @relation(fields: [workAreaId], references: [id], onDelete: SetNull)
+  trader   Trader    @relation(fields: [traderId], references: [id], onDelete: Restrict)
+  customer Customer  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  channel  Channel   @relation(fields: [channelId], references: [id], onDelete: Restrict)
+  workArea WorkArea? @relation(fields: [workAreaId], references: [id], onDelete: SetNull)
 
   messages Message[]
   payment  Payment?
 
-  @@index([traderId, scheduledStart])
+  @@index([traderId, confirmedStart])
   @@index([customerId])
   @@map("bookings")
 }
 
 model Message {
   id         String  @id @default(uuid())
+  channelId  String
+  customerId String
   bookingId  String?
   traderId   String?
-  customerId String?
 
-  channel   Channel
-  direction MessageDirection
-
-  senderId String
-  content  String
-  sentAt   DateTime
-
-  externalId String? @unique
+  direction  MessageDirection
+  senderType SenderType
+  content    String
+  sentAt     DateTime         @default(now())
+  externalId String?          @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  booking  Booking?         @relation(fields: [bookingId], references: [id], onDelete: SetNull)
-  trader   TraderProfile?   @relation(fields: [traderId], references: [id], onDelete: Cascade)
-  customer CustomerProfile? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  channel  Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  booking  Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  trader   Trader?  @relation(fields: [traderId], references: [id], onDelete: SetNull)
 
-  @@index([senderId, channel])
-  @@index([bookingId])
-  @@index([traderId])
+  @@index([channelId])
   @@index([customerId])
+  @@index([bookingId])
   @@map("messages")
 }
 
 model Payment {
-  id        String @id @default(uuid())
-  bookingId String @unique
+  id             String @id @default(uuid())
+  bookingId      String @unique
+  amount         Float
+  applicationFee Float
 
-  amount      Float
-  platformFee Float
-  currency    String @default("usd")
-
-  stripePaymentIntentId String? @unique
+  stripePaymentIntentId String?       @unique
   stripeTransferId      String?
-
-  status PaymentStatus @default(PENDING)
+  status                PaymentStatus @default(PENDING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

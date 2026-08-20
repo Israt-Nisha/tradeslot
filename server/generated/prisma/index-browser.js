@@ -120,20 +120,11 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
-exports.Prisma.UserScalarFieldEnum = {
+exports.Prisma.TraderScalarFieldEnum = {
   id: 'id',
   name: 'name',
   email: 'email',
-  password: 'password',
-  role: 'role',
-  isActive: 'isActive',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.TraderProfileScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
+  passwordHash: 'passwordHash',
   phone: 'phone',
   stripeAccountId: 'stripeAccountId',
   stripeOnboarded: 'stripeOnboarded',
@@ -141,10 +132,21 @@ exports.Prisma.TraderProfileScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.CustomerProfileScalarFieldEnum = {
+exports.Prisma.CustomerScalarFieldEnum = {
   id: 'id',
-  userId: 'userId',
-  phone: 'phone',
+  name: 'name',
+  contactInfo: 'contactInfo',
+  channelId: 'channelId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ChannelScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  type: 'type',
+  config: 'config',
+  isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -152,7 +154,7 @@ exports.Prisma.CustomerProfileScalarFieldEnum = {
 exports.Prisma.WorkAreaScalarFieldEnum = {
   id: 'id',
   traderId: 'traderId',
-  areaName: 'areaName',
+  areaDetails: 'areaDetails',
   date: 'date',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -162,9 +164,11 @@ exports.Prisma.BookingScalarFieldEnum = {
   id: 'id',
   traderId: 'traderId',
   customerId: 'customerId',
+  channelId: 'channelId',
   workAreaId: 'workAreaId',
-  scheduledStart: 'scheduledStart',
-  scheduledEnd: 'scheduledEnd',
+  requestedSlot: 'requestedSlot',
+  confirmedStart: 'confirmedStart',
+  confirmedEnd: 'confirmedEnd',
   status: 'status',
   jobAddress: 'jobAddress',
   notes: 'notes',
@@ -176,12 +180,12 @@ exports.Prisma.BookingScalarFieldEnum = {
 
 exports.Prisma.MessageScalarFieldEnum = {
   id: 'id',
+  channelId: 'channelId',
+  customerId: 'customerId',
   bookingId: 'bookingId',
   traderId: 'traderId',
-  customerId: 'customerId',
-  channel: 'channel',
   direction: 'direction',
-  senderId: 'senderId',
+  senderType: 'senderType',
   content: 'content',
   sentAt: 'sentAt',
   externalId: 'externalId',
@@ -193,8 +197,7 @@ exports.Prisma.PaymentScalarFieldEnum = {
   id: 'id',
   bookingId: 'bookingId',
   amount: 'amount',
-  platformFee: 'platformFee',
-  currency: 'currency',
+  applicationFee: 'applicationFee',
   stripePaymentIntentId: 'stripePaymentIntentId',
   stripeTransferId: 'stripeTransferId',
   status: 'status',
@@ -207,6 +210,11 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
@@ -216,10 +224,15 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
-exports.Role = exports.$Enums.Role = {
-  TRADER: 'TRADER',
-  CUSTOMER: 'CUSTOMER',
-  ADMIN: 'ADMIN'
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
+};
+exports.ChannelType = exports.$Enums.ChannelType = {
+  WEB_CHAT: 'WEB_CHAT',
+  WHATSAPP: 'WHATSAPP'
 };
 
 exports.BookingStatus = exports.$Enums.BookingStatus = {
@@ -229,14 +242,15 @@ exports.BookingStatus = exports.$Enums.BookingStatus = {
   CANCELLED: 'CANCELLED'
 };
 
-exports.Channel = exports.$Enums.Channel = {
-  WEB_CHAT: 'WEB_CHAT',
-  WHATSAPP: 'WHATSAPP'
-};
-
 exports.MessageDirection = exports.$Enums.MessageDirection = {
   INBOUND: 'INBOUND',
   OUTBOUND: 'OUTBOUND'
+};
+
+exports.SenderType = exports.$Enums.SenderType = {
+  TRADER: 'TRADER',
+  CUSTOMER: 'CUSTOMER',
+  SYSTEM: 'SYSTEM'
 };
 
 exports.PaymentStatus = exports.$Enums.PaymentStatus = {
@@ -247,9 +261,9 @@ exports.PaymentStatus = exports.$Enums.PaymentStatus = {
 };
 
 exports.Prisma.ModelName = {
-  User: 'User',
-  TraderProfile: 'TraderProfile',
-  CustomerProfile: 'CustomerProfile',
+  Trader: 'Trader',
+  Customer: 'Customer',
+  Channel: 'Channel',
   WorkArea: 'WorkArea',
   Booking: 'Booking',
   Message: 'Message',
