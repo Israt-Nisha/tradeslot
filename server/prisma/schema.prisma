@@ -7,7 +7,6 @@ datasource db {
   provider = "postgresql"
 }
 
-
 enum Role {
   TRADER
   CUSTOMER
@@ -38,14 +37,13 @@ enum PaymentStatus {
   REFUNDED
 }
 
-
-
 model User {
   id        String   @id @default(uuid())
   name      String?
-  email     String   @unique
-  password  String
-  role      Role
+  email     String?  @unique
+  phone     String?  @unique
+  password  String?
+  role      Role     @default(CUSTOMER)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -55,8 +53,6 @@ model User {
 
   @@map("users")
 }
-
-
 
 model TraderProfile {
   id     String @id @default(uuid())
@@ -68,8 +64,9 @@ model TraderProfile {
   stripeAccountId String? @unique
   stripeOnboarded Boolean @default(false)
 
-  defaultJobDurationMinutes  Int @default(60)
-  defaultTravelBufferMinutes Int @default(30)
+  defaultBookingFee          Decimal @default(50.00) @db.Decimal(10, 2)
+  defaultJobDurationMinutes  Int     @default(60)
+  defaultTravelBufferMinutes Int     @default(30)
 
   isActive Boolean @default(true)
 
@@ -85,12 +82,11 @@ model TraderProfile {
   @@map("trader_profiles")
 }
 
-
-
 model CustomerProfile {
   id     String @id @default(uuid())
   userId String @unique
 
+  name  String?
   phone String?
 
   createdAt DateTime @default(now())
@@ -104,12 +100,12 @@ model CustomerProfile {
   @@map("customer_profiles")
 }
 
-
 model WorkArea {
   id       String @id @default(uuid())
   traderId String
 
   areaName String
+  postcode String?
   date     DateTime
 
   createdAt DateTime @default(now())
@@ -121,8 +117,6 @@ model WorkArea {
   @@index([traderId, date])
   @@map("work_areas")
 }
-
-
 
 model Conversation {
   id String @id @default(uuid())
@@ -142,14 +136,12 @@ model Conversation {
   messages Message[]
   bookings Booking[]
 
-  @@unique([channel, externalId])
+  @@unique([traderId, channel, externalId])
   @@index([traderId])
   @@index([customerId])
   @@index([channel])
   @@map("conversations")
 }
-
-
 
 model Message {
   id String @id @default(uuid())
@@ -164,15 +156,15 @@ model Message {
 
   senderId   String
   content    String
-  sentAt     DateTime
-  externalId String? @unique
+  sentAt     DateTime @default(now())
+  externalId String?  @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  conversation Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  booking      Booking?        @relation(fields: [bookingId], references: [id], onDelete: SetNull)
-  trader       TraderProfile?  @relation(fields: [traderId], references: [id], onDelete: SetNull)
+  conversation Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  booking      Booking?         @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  trader       TraderProfile?   @relation(fields: [traderId], references: [id], onDelete: SetNull)
   customer     CustomerProfile? @relation(fields: [customerId], references: [id], onDelete: SetNull)
 
   @@index([conversationId])
@@ -181,13 +173,11 @@ model Message {
   @@map("messages")
 }
 
-
-
 model Booking {
   id String @id @default(uuid())
 
   traderId       String
-  customerId     String
+  customerId     String?
   workAreaId     String?
   conversationId String?
 
@@ -196,20 +186,23 @@ model Booking {
 
   status BookingStatus @default(PENDING)
 
-  jobAddress String?
-  notes      String?
+  jobAddress    String?
+  notes         String?
+  customerName  String?
+  customerPhone String?
+  customerEmail String?
 
-  jobDurationMinutes  Int
-  travelBufferMinutes Int
+  jobDurationMinutes  Int @default(60)
+  travelBufferMinutes Int @default(30)
 
-  bookingFee Decimal @db.Decimal(10, 2)
+  bookingFee Decimal @default(50.00) @db.Decimal(10, 2)
   currency   String  @default("GBP")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   trader       TraderProfile    @relation(fields: [traderId], references: [id], onDelete: Restrict)
-  customer     CustomerProfile  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  customer     CustomerProfile? @relation(fields: [customerId], references: [id], onDelete: SetNull)
   workArea     WorkArea?        @relation(fields: [workAreaId], references: [id], onDelete: SetNull)
   conversation Conversation?    @relation(fields: [conversationId], references: [id], onDelete: SetNull)
 
@@ -222,7 +215,6 @@ model Booking {
   @@index([conversationId])
   @@map("bookings")
 }
-
 
 model Payment {
   id String @id @default(uuid())
