@@ -1,6 +1,7 @@
 import express from 'express';
 import { AuthRoutes } from '../modules/Auth/auth.route';
 import { WorkAreaRoutes } from '../modules/WorkArea/workArea.route';
+import { BookingRoutes } from '../modules/Booking/booking.route';
 
 const router = express.Router();
 
@@ -12,6 +13,10 @@ const moduleRoutes = [
   {
     path: '/work-areas',
     route: WorkAreaRoutes,
+  },
+  {
+    path: '/bookings',
+    route: BookingRoutes,
   },
 ];
 
