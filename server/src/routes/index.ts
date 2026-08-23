@@ -3,6 +3,7 @@ import { AuthRoutes } from '../modules/Auth/auth.route';
 import { WorkAreaRoutes } from '../modules/WorkArea/workArea.route';
 import { BookingRoutes } from '../modules/Booking/booking.route';
 import { ConversationRoutes } from '../modules/Conversation/conversation.route';
+import { PaymentRoutes } from '../modules/Payment/payment.route';
 
 const router = express.Router();
 
@@ -22,6 +23,10 @@ const moduleRoutes = [
   {
     path: '/conversations',
     route: ConversationRoutes,
+  },
+  {
+    path: '/payments',
+    route: PaymentRoutes,
   },
 ];
 
