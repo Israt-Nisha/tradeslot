@@ -1,18 +1,22 @@
-import { fetchClient } from '../../lib/fetch-client';
+import { fetchClient, APIResponse } from '../../lib/fetch-client';
 
 export const bookingApi = {
   createBooking: (payload: any) => 
-    fetchClient.post<any>('/bookings', payload),
+    fetchClient.post<APIResponse<any>>('/bookings', payload),
 
   getAllBookings: () => 
-    fetchClient.get<any[]>('/bookings'),
+    fetchClient.get<APIResponse<any[]>>('/bookings'),
 
   getBookingById: (id: string) => 
-    fetchClient.get<any>(`/bookings/${id}`),
+    fetchClient.get<APIResponse<any>>(`/bookings/${id}`),
 
   updateBooking: (id: string, payload: any) => 
-    fetchClient.patch<any>(`/bookings/${id}`, payload),
+    fetchClient.patch<APIResponse<any>>(`/bookings/${id}`, payload),
 
   deleteBooking: (id: string) => 
-    fetchClient.delete<any>(`/bookings/${id}`),
+    fetchClient.delete<APIResponse<any>>(`/bookings/${id}`),
+
+  getPublicBookingById: (id: string) =>
+    fetchClient.get<APIResponse<any>>(`/bookings/public/${id}`),
 };
+

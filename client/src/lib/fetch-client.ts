@@ -1,5 +1,11 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
 
+export type APIResponse<T> = {
+  success: boolean;
+  message: string;
+  data: T;
+};
+
 type FetchOptions = RequestInit & {
   body?: any;
 };

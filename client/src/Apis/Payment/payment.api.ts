@@ -1,9 +1,9 @@
-import { fetchClient } from '../../lib/fetch-client';
+import { fetchClient, APIResponse } from '../../lib/fetch-client';
 
 export const paymentApi = {
   connectSetup: () => 
-    fetchClient.post<{ url: string }>('/payments/connect-setup'),
+    fetchClient.post<APIResponse<{ url: string }>>('/payments/connect-setup'),
 
   createCheckoutSession: (bookingId: string) => 
-    fetchClient.post<{ url: string }>('/payments/checkout-session', { bookingId }),
+    fetchClient.post<APIResponse<{ url: string }>>('/payments/checkout-session', { bookingId }),
 };
