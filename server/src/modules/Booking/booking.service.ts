@@ -108,6 +108,7 @@ const getAllBookings = async (traderId: string) => {
     include: {
       customer: true,
       workArea: true,
+      payment: true,
     },
     orderBy: { scheduledStart: 'asc' },
   });
@@ -122,8 +123,10 @@ const getBookingById = async (traderId: string, id: string) => {
       customer: true,
       workArea: true,
       conversation: true,
+      payment: true,
     },
   });
+
 
   if (!booking) {
     throw new AppError(status.NOT_FOUND, 'Booking not found');
@@ -212,10 +215,42 @@ const deleteBooking = async (traderId: string, id: string) => {
   return cancelledBooking;
 };
 
+const getPublicBookingById = async (id: string) => {
+  const booking = await prisma.booking.findUnique({
+    where: { id },
+    include: {
+      trader: {
+        include: {
+          user: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!booking) {
+    throw new AppError(status.NOT_FOUND, 'Booking not found');
+  }
+
+  return {
+    id: booking.id,
+    scheduledStart: booking.scheduledStart,
+    scheduledEnd: booking.scheduledEnd,
+    customerName: booking.customerName,
+    traderName: booking.trader.user?.name || booking.trader.businessName || 'Trader',
+    status: booking.status,
+  };
+};
+
 export const BookingService = {
   createBooking,
   getAllBookings,
   getBookingById,
   updateBooking,
   deleteBooking,
+  getPublicBookingById,
 };
+

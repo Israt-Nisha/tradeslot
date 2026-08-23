@@ -37,8 +37,20 @@ const getSession = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllTraders = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthService.getAllTraders();
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'Traders list retrieved successfully',
+    data: result,
+  });
+});
+
 export const AuthController = {
   registerTrader,
   loginTrader,
   getSession,
-};
+  getAllTraders,
+};

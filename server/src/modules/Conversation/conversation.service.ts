@@ -108,25 +108,47 @@ const createMessage = async (
     });
 
     if (!customerProfile) {
-      // Create user and profile
-      const user = await prisma.user.create({
-        data: {
-          name: `Customer ${payload.senderId}`,
-          phone: payload.senderId,
-          role: 'CUSTOMER',
-          customerProfile: {
-            create: {
-              name: `Customer ${payload.senderId}`,
+      // Check if user exists with the same phone number
+      const existingUser = await prisma.user.findFirst({
+        where: { phone: payload.senderId },
+        include: { customerProfile: true },
+      });
+
+      if (existingUser) {
+        if (existingUser.customerProfile) {
+          customerProfile = existingUser.customerProfile;
+        } else {
+          // User exists but has no customer profile, create it
+          customerProfile = await prisma.customerProfile.create({
+            data: {
+              userId: existingUser.id,
+              name: existingUser.name || `Customer ${payload.senderId}`,
               phone: payload.senderId,
             },
+          });
+        }
+      } else {
+        // Create user and profile
+        const user = await prisma.user.create({
+          data: {
+            name: `Customer ${payload.senderId}`,
+            phone: payload.senderId,
+            role: 'CUSTOMER',
+            customerProfile: {
+              create: {
+                name: `Customer ${payload.senderId}`,
+                phone: payload.senderId,
+              },
+            },
           },
-        },
-        include: {
-          customerProfile: true,
-        },
-      });
-      customerProfile = user.customerProfile!;
+          include: {
+            customerProfile: true,
+          },
+        });
+        customerProfile = user.customerProfile!;
+      }
     }
+
 
     // Link customer to conversation
     await prisma.conversation.update({

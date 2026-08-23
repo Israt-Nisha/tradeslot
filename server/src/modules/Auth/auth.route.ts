@@ -24,4 +24,10 @@ router.get(
   AuthController.getSession
 );
 
+router.get(
+  '/traders',
+  AuthController.getAllTraders
+);
+
 export const AuthRoutes = router;
+

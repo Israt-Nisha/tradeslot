@@ -82,7 +82,7 @@ const createCheckoutSession = async (bookingId: string, origin: string) => {
   }
 
   const amountInCents = Math.round(Number(booking.bookingFee) * 100);
-  
+
   // Platform flat fee: £5.00
   const PLATFORM_FLAT_FEE = 5.00;
   // Ensure application fee doesn't exceed total booking fee

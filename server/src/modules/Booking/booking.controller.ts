@@ -82,10 +82,23 @@ const deleteBooking = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getPublicBookingById = catchAsync(async (req: Request, res: Response) => {
+  const result = await BookingService.getPublicBookingById(req.params.id as string);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'Public booking retrieved successfully',
+    data: result,
+  });
+});
+
 export const BookingController = {
   createBooking,
   getAllBookings,
   getBookingById,
   updateBooking,
   deleteBooking,
+  getPublicBookingById,
 };
+

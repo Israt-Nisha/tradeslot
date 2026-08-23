@@ -136,8 +136,29 @@ const getTraderSession = async (traderProfileId: string) => {
   };
 };
 
+const getAllTraders = async () => {
+  const traders = await prisma.traderProfile.findMany({
+    where: { isActive: true },
+    include: {
+      user: true,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return traders.map((trader) => ({
+    id: trader.id,
+    businessName: trader.businessName || 'Independent Trader',
+    name: trader.user.name || '',
+    email: trader.user.email || '',
+    phone: trader.phone,
+    stripeAccountId: trader.stripeAccountId,
+    stripeOnboarded: trader.stripeOnboarded,
+  }));
+};
+
 export const AuthService = {
   registerTrader,
   loginTrader,
   getTraderSession,
-};
+  getAllTraders,
+};

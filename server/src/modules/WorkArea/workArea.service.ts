@@ -69,10 +69,52 @@ const deleteWorkArea = async (traderId: string, id: string) => {
   return { id };
 };
 
+const getWorkAreaByDate = async (traderId: string, dateStr: string) => {
+  const startOfDay = new Date(dateStr);
+  startOfDay.setUTCHours(0, 0, 0, 0);
+  const endOfDay = new Date(dateStr);
+  endOfDay.setUTCHours(23, 59, 59, 999);
+
+  const workArea = await prisma.workArea.findFirst({
+    where: {
+      traderId,
+      date: {
+        gte: startOfDay,
+        lte: endOfDay,
+      },
+    },
+  });
+
+  if (!workArea) {
+    throw new AppError(status.NOT_FOUND, `Work area not found for date ${dateStr}`);
+  }
+
+  return workArea;
+};
+
+const updateWorkAreaByDate = async (traderId: string, dateStr: string, payload: TUpdateWorkAreaInput) => {
+  const workArea = await getWorkAreaByDate(traderId, dateStr);
+
+  const updateData: any = {};
+  if (payload.areaName !== undefined) updateData.areaName = payload.areaName;
+  if (payload.postcode !== undefined) updateData.postcode = payload.postcode || null;
+  if (payload.date !== undefined) updateData.date = new Date(payload.date);
+
+  const updatedWorkArea = await prisma.workArea.update({
+    where: { id: workArea.id },
+    data: updateData,
+  });
+
+  return updatedWorkArea;
+};
+
 export const WorkAreaService = {
   createWorkArea,
   getAllWorkAreas,
   getWorkAreaById,
   updateWorkArea,
   deleteWorkArea,
+  getWorkAreaByDate,
+  updateWorkAreaByDate,
 };
+

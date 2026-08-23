@@ -119,48 +119,15 @@ const handleWebhook = catchAsync(async (req: Request, res: Response) => {
 });
 
 const successRedirect = catchAsync(async (req: Request, res: Response) => {
-  res.send(`
-    <html>
-      <head>
-        <title>Payment Success</title>
-        <style>
-          body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f4f5f6; }
-          .card { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; max-width: 400px; }
-          h1 { color: #30c275; margin-bottom: 10px; font-size: 24px; }
-          p { color: #555; line-height: 1.5; }
-        </style>
-      </head>
-      <body>
-        <div class="card">
-          <h1>Payment Successful!</h1>
-          <p>Thank you! Your payment has been received successfully, and the booking is now confirmed.</p>
-        </div>
-      </body>
-    </html>
-  `);
+  const { bookingId } = req.query;
+  res.redirect(`http://localhost:3000/payment/success?bookingId=${bookingId}`);
 });
 
 const cancelRedirect = catchAsync(async (req: Request, res: Response) => {
-  res.send(`
-    <html>
-      <head>
-        <title>Payment Cancelled</title>
-        <style>
-          body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f4f5f6; }
-          .card { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; max-width: 400px; }
-          h1 { color: #e15241; margin-bottom: 10px; font-size: 24px; }
-          p { color: #555; line-height: 1.5; }
-        </style>
-      </head>
-      <body>
-        <div class="card">
-          <h1>Payment Cancelled</h1>
-          <p>The checkout process was cancelled. No charges were made.</p>
-        </div>
-      </body>
-    </html>
-  `);
+  const { bookingId } = req.query;
+  res.redirect(`http://localhost:3000/payment/cancel?bookingId=${bookingId}`);
 });
+
 
 export const PaymentController = {
   connectSetup,

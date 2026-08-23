@@ -75,10 +75,41 @@ const deleteWorkArea = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getWorkAreaByDate = catchAsync(async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError(status.UNAUTHORIZED, 'You are not authorized to access this resource');
+  }
+  const result = await WorkAreaService.getWorkAreaByDate(req.user!.id, req.params.date as string);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'Work area retrieved successfully',
+    data: result,
+  });
+});
+
+const updateWorkAreaByDate = catchAsync(async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError(status.UNAUTHORIZED, 'You are not authorized to access this resource');
+  }
+  const result = await WorkAreaService.updateWorkAreaByDate(req.user!.id, req.params.date as string, req.body);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: 'Work area updated successfully',
+    data: result,
+  });
+});
+
 export const WorkAreaController = {
   createWorkArea,
   getAllWorkAreas,
   getWorkAreaById,
   updateWorkArea,
   deleteWorkArea,
+  getWorkAreaByDate,
+  updateWorkAreaByDate,
 };
+

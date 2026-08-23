@@ -45,4 +45,10 @@ router.delete(
   BookingController.deleteBooking
 );
 
+router.get(
+  '/public/:id',
+  BookingController.getPublicBookingById
+);
+
 export const BookingRoutes = router;
+
